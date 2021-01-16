@@ -160,7 +160,7 @@ int main(int argc, char **argv)
 
     struct sigaction sa;
 
-    // Initialize EAL
+    printf("Initializing EAL...\n");
     rte_eal_init(argc, argv);
 
     argc -= ret;

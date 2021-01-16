@@ -1,5 +1,5 @@
 
-APP = rx-skeleton
+APP = rx-skeleton-c
 
 SRCS-y := main.c
 
