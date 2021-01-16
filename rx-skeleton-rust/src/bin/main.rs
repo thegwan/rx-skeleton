@@ -6,6 +6,9 @@ use std::ffi::CString;
 use std::mem::MaybeUninit;
 use std::ptr;
 use std::env;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::os::raw::c_void;
 
 const PORT_ID: u16 = 0;
 const CAPACITY: u32 = 65535;
@@ -49,6 +52,101 @@ fn main() {
         let ret = unsafe {dpdk::rte_eth_promiscuous_enable(PORT_ID)};
         assert!(ret >= 0);
     }
+
+    let mut is_running = Arc::new(AtomicBool::new(true));
+    let r = Arc::clone(&is_running);
+
+    ctrlc::set_handler(move || {
+        r.store(false, Ordering::SeqCst);
+    }).expect("Error setting Ctrl-C handler");
+
+    println!("Starting port 0...");
+    assert_eq!(unsafe {dpdk::rte_eth_dev_start(PORT_ID)}, 0);
+
+    let callback_arg: *mut c_void = &mut is_running as *mut _ as *mut c_void;
+    let ret = unsafe {
+        dpdk::rte_eal_mp_remote_launch(
+            Some(lcore_launch),
+            callback_arg as *mut c_void,
+            dpdk::rte_rmt_call_main_t_SKIP_MAIN,
+        )
+    };
+    assert_eq!(ret, 0);
+
+    main_thread();
+    unsafe {dpdk::rte_eal_mp_wait_lcore()};
+
+    disp_eth_stats();
+
+    println!("Stopping port 0...");
+    assert_eq!(unsafe {dpdk::rte_eth_dev_stop(PORT_ID)}, 0);
+    unsafe {dpdk::rte_eth_dev_close(PORT_ID)};
+
+}
+
+fn recv_thread(is_running: Arc<AtomicBool>) {
+    let lcore_id = unsafe {dpdk::rte_lcore_id()};
+    let q = lcore_id - 1;
+
+    let mut total: u64 = 0;
+    while is_running.load(Ordering::SeqCst) {
+        let mut ptrs = Vec::with_capacity(32 as usize);
+        let nb_rx = unsafe {dpdk::rte_eth_rx_burst(
+            PORT_ID,
+            q,
+            ptrs.as_mut_ptr(),
+            32,
+        )};
+
+        unsafe {
+            ptrs.set_len(nb_rx as usize);
+        }
+
+        for ptr in ptrs.into_iter() {
+            total += 1;
+            unsafe {dpdk::rte_pktmbuf_free(ptr as *mut _)};
+        }
+    }
+    println!("Signal received, preparing to exit...");
+
+    println!("Core {} total RX: {}", lcore_id, total);
+}
+
+extern "C" fn lcore_launch(arg: *mut c_void) -> i32 {
+    let is_running = arg as *mut Arc<AtomicBool>;
+    let is_running = unsafe {&mut *is_running};
+    recv_thread(Arc::clone(&is_running));
+    0
+}
+
+fn main_thread() {
+    println!("In main_thread!");
+}
+
+fn disp_eth_stats() {
+
+    let mut eth_stats: dpdk::rte_eth_stats = unsafe { 
+        MaybeUninit::zeroed().assume_init() 
+    };
+    let ret = unsafe {dpdk::rte_eth_stats_get(0, &mut eth_stats)};
+    assert_eq!(ret, 0);
+    
+    let ipackets = eth_stats.ipackets;
+    let imissed = eth_stats.imissed;
+    let ierrors = eth_stats.ierrors;
+    let total = ipackets + imissed + ierrors;
+    println!("Total packets received by port (sum): {}", total);
+    println!("Successfully received packets: {}", ipackets);
+    println!("Packets dropped by HW due to RX queue full: {}", imissed);
+    println!("Error packets: {}", ierrors);
+    println!("Num RX mbuf allocation failures: {}", eth_stats.rx_nombuf);
+
+    let nb_queues = unsafe {dpdk::rte_lcore_count() - 1};
+    for q in 0..nb_queues {
+        println!("Queue {} successfully received packets: {}", q, eth_stats.q_ipackets[q as usize]);
+        println!("Queue {} packets dropped by HW: {}", q, eth_stats.q_errors[q as usize]);
+    }
+
 }
 
 fn mbufpool_init() -> *mut dpdk::rte_mempool {

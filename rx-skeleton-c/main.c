@@ -192,7 +192,7 @@ int main(int argc, char **argv)
     rte_eth_dev_start(PORT_ID);
 
     rte_eal_mp_remote_launch(lcore_launch, NULL, SKIP_MAIN);
-    main_thread(port_id);
+    main_thread();
     rte_eal_mp_wait_lcore();
 
     disp_eth_stats();
