@@ -1,5 +1,5 @@
 
-APP = rx-skeleton-c
+APP = simple-count
 
 SRCS-y := main.c
 

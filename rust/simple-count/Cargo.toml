@@ -1,5 +1,5 @@
 [package]
-name = "rx-skeleton-rust"
+name = "simple-count"
 version = "0.1.0"
 authors = ["thegwan <gwan.email@gmail.com>"]
 edition = "2018"
