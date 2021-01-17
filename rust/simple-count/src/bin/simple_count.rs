@@ -57,7 +57,7 @@ fn main() {
     let r = Arc::clone(&is_running);
 
     ctrlc::set_handler(move || {
-        r.store(false, Ordering::SeqCst);
+        r.store(false, Ordering::Relaxed);
     }).expect("Error setting Ctrl-C handler");
 
     println!("Starting port 0...");
@@ -89,7 +89,7 @@ fn recv_thread(is_running: Arc<AtomicBool>) {
     let q = lcore_id - 1;
 
     let mut total: u64 = 0;
-    while is_running.load(Ordering::SeqCst) {
+    while is_running.load(Ordering::Relaxed) {
         let mut ptrs = Vec::with_capacity(32 as usize);
         let nb_rx = unsafe {dpdk::rte_eth_rx_burst(
             PORT_ID,
