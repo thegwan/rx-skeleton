@@ -5,7 +5,7 @@ This repository contains skeleton code for benchmarking packet RX throughput wit
 ## Prerequisites
 These applications are meant to be run on a multi-core Linux server with a Mellanox CX-5 adapter. More interfaces are ok, but for simplicity these assume that port index 0 is on the Mellanox card.
 
-Build and install [DPDK 20.11](https://core.dpdk.org/download/) on your system. See the [Getting Started Guide](https://doc.dpdk.org/guides/linux_gsg/index.html) for more details. This will also require installing the MLNX_OFED (tested on version 5.1-2.5.8.0).
+Build and install [DPDK 20.08](https://core.dpdk.org/download/) on your system. See the [Getting Started Guide](https://doc.dpdk.org/guides/linux_gsg/index.html) for more details. This will also require installing the MLNX_OFED (tested on version 5.1-2.5.8.0).
 
 Set the `DPDK_PATH` environment variable to the DPDK installation directory, and set `LD_LIBRARY_PATH` to `$DPDK_PATH/lib/x86_64-linux-gnu`.
 

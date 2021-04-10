@@ -73,7 +73,7 @@ static void port_init()
         rte_exit(EXIT_FAILURE, "Port configuration failed.\n");
 
     q = 0;
-    RTE_LCORE_FOREACH_WORKER(lcore_id) {
+    RTE_LCORE_FOREACH_SLAVE(lcore_id) {
         rte_eth_rx_queue_setup(PORT_ID, q, NB_RX_DESC, 
             rte_eth_dev_socket_id(PORT_ID), NULL, mbufpool);
         q++;
@@ -191,7 +191,7 @@ int main(int argc, char **argv)
     printf("Starting port 0...\n");
     rte_eth_dev_start(PORT_ID);
 
-    rte_eal_mp_remote_launch(lcore_launch, NULL, SKIP_MAIN);
+    rte_eal_mp_remote_launch(lcore_launch, NULL, SKIP_MASTER);
     main_thread();
     rte_eal_mp_wait_lcore();
 
