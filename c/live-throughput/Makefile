@@ -7,7 +7,7 @@ CC = gcc
 
 # Build using pkg-config variables if possible
 ifneq ($(shell pkg-config --exists libdpdk && echo 0),0)
-	$(error "no installation of DPDK found")
+$(error "no installation of DPDK found")
 endif
 
 all: static  # shared causes some issue where no available ports found
