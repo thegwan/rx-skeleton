@@ -229,7 +229,7 @@ static void disp_xstats(void)
     }
     
     for (i = 0; i < len; i++) {
-        if (xstats[i].value > 0)
+        if (xstats_names[i].name[0] == 'r')
             printf("Port %u: %s %s: %"PRIu64"\n",
                     port_id, stats_border,
                     xstats_names[i].name,
