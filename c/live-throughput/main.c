@@ -188,6 +188,58 @@ static void disp_eth_stats(void)
     
 }
 
+static void disp_xstats(void) 
+{
+    struct rte_eth_xstat *xstats;
+    struct rte_eth_xstat_name *xstats_names;
+    int len, ret, i;
+    uint16_t port_id;
+    static const char *stats_border = "_______";
+
+    len = rte_eth_xstats_get(port_id, NULL, 0);
+    if (len < 0)
+        rte_exit(EXIT_FAILURE, "rte_eth_xstats_get(%u) failed: %d", port_id, len);
+
+    xstats = calloc(len, sizeof(*xstats));
+    if (xstats == NULL)
+        rte_exit(EXIT_FAILURE, "Failed to calloc memory for xstats");
+
+    ret = rte_eth_xstats_get(port_id, xstats, len);
+    if (ret < 0 || ret > len) {
+        free(xstats);
+        rte_exit(EXIT_FAILURE,
+                "rte_eth_xstats_get(%u) len%i failed: %d",
+                port_id, len, ret);
+    }
+    
+    xstats_names = calloc(len, sizeof(*xstats_names));
+    if (xstats_names == NULL) {
+        free(xstats);
+        rte_exit(EXIT_FAILURE,
+                "Failed to calloc memory for xstats_names");
+    }
+    
+    ret = rte_eth_xstats_get_names(port_id, xstats_names, len);
+    if (ret < 0 || ret > len) {
+        free(xstats);
+        free(xstats_names);
+        rte_exit(EXIT_FAILURE,
+                "rte_eth_xstats_get_names(%u) len%i failed: %d",
+                port_id, len, ret);
+    }
+    
+    for (i = 0; i < len; i++) {
+        if (xstats[i].value > 0)
+            printf("Port %u: %s %s: %"PRIu64"\n",
+                    port_id, stats_border,
+                    xstats_names[i].name,
+                    xstats[i].value);
+    }
+
+    free(xstats);
+    free(xstats_names);
+}
+
 /* 
  * Single socket, single port
  * Immediately free mbuf upon receive, count number of successfully received
@@ -239,6 +291,7 @@ int main(int argc, char **argv)
     rte_eal_mp_wait_lcore();
 
     disp_eth_stats();
+    disp_xstats();
 
     printf("Stopping port 0...\n");
     rte_eth_dev_stop(PORT_ID);
