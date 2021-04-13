@@ -130,11 +130,13 @@ static void recv_thread()
             total += 1;
             lcore_stats[lcore_id].rx_pkts += 1;
             lcore_stats[lcore_id].rx_bytes += mbufs[i]->data_len;
-
-            printf("buf_len: %d\n", mbufs[i]->buf_len);
-            printf("pkt_len: %d\n", mbufs[i]->pkt_len);
-            printf("data_len: %d\n", mbufs[i]->data_len);
-            printf("data_off: %d\n", mbufs[i]->data_off);
+            
+//            if (mbufs[i]->pkt_len > 1542) {
+//                printf("buf_len: %d\n", mbufs[i]->buf_len);
+//                printf("pkt_len: %d\n", mbufs[i]->pkt_len);
+//                printf("data_len: %d\n", mbufs[i]->data_len);
+//                printf("data_off: %d\n", mbufs[i]->data_off);
+//            }
             rte_pktmbuf_free(mbufs[i]);
         }
     }
