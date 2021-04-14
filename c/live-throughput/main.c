@@ -16,7 +16,7 @@
 #define CACHE_SIZE 512
 #define NB_RX_DESC 4096
 #define JUMBO_FRAME_MAX_SIZE 9728
-#define MTU_OVERHEAD (RTE_ETHER_HDR_LEN + RTE_ETHER_CRC_LEN + 2 * sizeof(struct rte_vlan_hdr))
+#define MAX_MTU_OVERHEAD (RTE_ETHER_HDR_LEN + RTE_ETHER_CRC_LEN + 2 * sizeof(struct rte_vlan_hdr))
 
 static volatile bool force_quit;
 struct rte_mempool *mbufpool;
@@ -63,8 +63,8 @@ static void mbufpool_init()
 {
     char name[16];
     snprintf(name, sizeof(name), "mbufpool0");
-    mbufpool = rte_pktmbuf_pool_create(name,
-        CAPACITY, CACHE_SIZE, 0, RTE_MBUF_DEFAULT_BUF_SIZE, 0);
+    mbufpool = rte_pktmbuf_pool_create(name, CAPACITY, CACHE_SIZE, 0, JUMBO_FRAME_MAX_SIZE + RTE_PKTMBUF_HEADROOM, 0);
+    //mbufpool = rte_pktmbuf_pool_create(name, CAPACITY, CACHE_SIZE, 0, RTE_MBUF_DEFAULT_BUF_SIZE, 0);
 
     if (mbufpool == NULL)
         rte_exit(EXIT_FAILURE, "Failed to create mbufpool.\n");
@@ -82,7 +82,7 @@ static void port_init()
         printf("Failed to get MTU\n");
     }
     printf("before set MTU: %d\n", mtu);
-    ret = rte_eth_dev_set_mtu(0, port_conf.rxmode.max_rx_pkt_len - MTU_OVERHEAD);
+    ret = rte_eth_dev_set_mtu(0, port_conf.rxmode.max_rx_pkt_len - MAX_MTU_OVERHEAD);
     if (ret < 0) {
         printf("Failed to set MTU\n");
     }
@@ -95,7 +95,7 @@ static void port_init()
     port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_VLAN_STRIP;
     port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_SCATTER;
     port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_JUMBO_FRAME;
-    port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_CHECKSUM;
+    //port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_CHECKSUM;
 
     // 1 queue per core
     ret = rte_eth_dev_configure(PORT_ID, nb_workers, 0, &port_conf);
@@ -132,10 +132,12 @@ static void recv_thread()
             lcore_stats[lcore_id].rx_bytes += mbufs[i]->data_len;
             
 //            if (mbufs[i]->pkt_len > 1542) {
-//                printf("buf_len: %d\n", mbufs[i]->buf_len);
-//                printf("pkt_len: %d\n", mbufs[i]->pkt_len);
-//                printf("data_len: %d\n", mbufs[i]->data_len);
-//                printf("data_off: %d\n", mbufs[i]->data_off);
+            //    printf("buf_len: %d\n", mbufs[i]->buf_len);
+            //    printf("pkt_len: %d\n", mbufs[i]->pkt_len);
+            //    printf("data_len: %d\n", mbufs[i]->data_len);
+            //    printf("data_off: %d\n", mbufs[i]->data_off);
+            //        printf("next: 0x%lx\n", (long)mbufs[i]->next);
+               
 //            }
             rte_pktmbuf_free(mbufs[i]);
         }
