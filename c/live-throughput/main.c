@@ -43,7 +43,7 @@ static struct rte_eth_conf port_conf = {
         .rss_conf = {
             .rss_key = sym_rss_key,
             .rss_key_len = 40,
-            .rss_hf = ETH_RSS_IP | ETH_RSS_TCP | ETH_RSS_UDP
+          //  .rss_hf = ETH_RSS_IP | ETH_RSS_TCP | ETH_RSS_UDP
         },
     },
 };
