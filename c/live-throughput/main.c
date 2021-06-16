@@ -12,7 +12,7 @@
 #include <rte_lcore.h>
 
 #define PORT_ID 0
-#define CAPACITY 65535
+#define CAPACITY 131071
 #define CACHE_SIZE 512
 #define NB_RX_DESC 4096
 
