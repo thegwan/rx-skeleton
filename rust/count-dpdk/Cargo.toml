@@ -1,5 +1,5 @@
 [package]
-name = "simple-count"
+name = "count-dpdk"
 version = "0.1.0"
 authors = ["thegwan <gwan.email@gmail.com>"]
 edition = "2018"

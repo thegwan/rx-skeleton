@@ -1,4 +1,4 @@
-use simple_count::{
+use count_dpdk::{
     dpdk,
 };
 
