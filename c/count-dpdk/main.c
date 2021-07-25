@@ -145,6 +145,39 @@ static void disp_eth_stats(void)
     
 }
 
+void
+nic_disp_dev_info(uint16_t port_id)
+{
+    int ret;
+
+    struct rte_eth_dev_info dev_info;
+    ret = rte_eth_dev_info_get(port_id, &dev_info);
+    if (ret != 0) {
+        printf("Error getting device (port %u) info: %s\n",
+                port_id, strerror(-ret));
+        return;
+    }
+
+	printf("Info: Driver name: %s\n", dev_info.driver_name); 
+    printf("Info: Speed capability bitmap: %x\n", dev_info.speed_capa);
+    printf("Info: Max RX queues: %d\n", dev_info.max_rx_queues);
+    printf("Info: Num RX queues: %d\n", dev_info.nb_rx_queues);
+    printf("Info: RX offload capa bitmap: %lx\n", dev_info.rx_offload_capa);
+    printf("Info: RX queue offload capa bitmap: %lx\n", dev_info.rx_offload_capa);
+    printf("Info: default RX offloads: %lu\n", dev_info.default_rxconf.offloads);
+    printf("Info: Max TX queues: %d\n", dev_info.max_tx_queues);
+    printf("Info: Num TX queues: %d\n", dev_info.nb_tx_queues);
+    printf("Info: Hash key size: %u\n", dev_info.hash_key_size);
+    printf("Info: Redirection table size: %u\n", dev_info.reta_size);
+
+    if (dev_info.rx_offload_capa & DEV_RX_OFFLOAD_VLAN_STRIP)
+        printf("Info: VLAN strip offload capable.\n");
+    if (rte_eth_dev_get_vlan_offload(port_id)) 
+        printf("Info: VLAN strip offload enabled.\n");
+    else
+        printf("Info: VLAN strip offlooad disabled.\n");
+}
+
 /* 
  * Single socket, single port
  * Immediately free mbuf upon receive, count number of successfully received
@@ -187,6 +220,8 @@ int main(int argc, char **argv)
     ret = rte_eth_promiscuous_enable(PORT_ID);
     if (ret < 0)
         rte_exit(EXIT_FAILURE, "Failed to set promiscuous.\n");
+
+    nic_disp_dev_info(0);
 
     printf("Starting port 0...\n");
     rte_eth_dev_start(PORT_ID);
