@@ -1,4 +1,4 @@
-APP = simple-count
+APP = count-dpdk
 
 SRCS-y := main.c
 

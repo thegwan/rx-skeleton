@@ -1,5 +1,5 @@
 
-APP = livestats-dpdk
+APP = dualport-dpdk
 
 SRCS-y := main.c
 
