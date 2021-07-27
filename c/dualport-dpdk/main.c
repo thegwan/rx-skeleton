@@ -298,7 +298,7 @@ int main(int argc, char **argv)
     printf("Initializing mbufpool on socket 0...\n");
     mbufpool_init();
 
-    printf("Initializing port 0...\n");
+    printf("Initializing ports...\n");
     port_init();
 
     ret = rte_eth_promiscuous_enable(0);
