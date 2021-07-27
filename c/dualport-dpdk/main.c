@@ -73,7 +73,7 @@ static void port_init()
     int lcore_id, q;
     int nb_workers = rte_lcore_count() - 1;
     int nb_workers_per_port = nb_workers / 2;
-
+    printf("Num workers per port: %d\n", nb_workers_per_port);
     port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_VLAN_STRIP;
 
     // 1 queue per core
@@ -88,6 +88,7 @@ static void port_init()
     q = 0;
     //RTE_LCORE_FOREACH_WORKER(lcore_id) {
     for (int lcore_id = 1; lcore_id <= nb_workers_per_port; lcore_id++) {
+        printf("port: %d, lcore_id: %d, queue: %d\n", 0, lcore_id, q);
         rte_eth_rx_queue_setup(0, q, NB_RX_DESC, 
             rte_eth_dev_socket_id(0), NULL, mbufpool);
         q++;
@@ -96,6 +97,7 @@ static void port_init()
     q = 0;
     //RTE_LCORE_FOREACH_WORKER(lcore_id) {
     for (int lcore_id = nb_workers_per_port+1; lcore_id <= nb_workers; lcore_id++) {
+        printf("port: %d, lcore_id: %d, queue: %d\n", 1, lcore_id, q);
         rte_eth_rx_queue_setup(1, q, NB_RX_DESC, 
             rte_eth_dev_socket_id(1), NULL, mbufpool);
         q++;
@@ -109,13 +111,14 @@ static void recv_thread()
     uint16_t i, q, nb_rx;
     int lcore_id = rte_lcore_id();
     
-    q = lcore_id - 1;
+    q = (lcore_id - 1) % 2;
     printf("Starting RX from core %u (queue %u)...\n", lcore_id, q);
     
     
     int nb_workers = rte_lcore_count() - 1;
     int nb_workers_per_port = nb_workers / 2;
     uint16_t port_id = (lcore_id - 1) / nb_workers_per_port;
+    
     uint64_t total = 0;
 
     while (!force_quit) {
@@ -146,7 +149,7 @@ static void disp_eth_stats(void)
     uint16_t q;
     int ret;
     
-    for (uint16_t port_id = 0; port_id < 1; port_id++) {
+    for (uint16_t port_id = 0; port_id <= 1; port_id++) {
         memset(&eth_stats, 0, sizeof(eth_stats));
         ret = rte_eth_stats_get(port_id, &eth_stats);
         uint64_t total = 0;
@@ -168,12 +171,12 @@ static void disp_eth_stats(void)
     }
 }
 
-static void disp_xstats(void) 
+static void disp_xstats(uint16_t port_id) 
 {
     struct rte_eth_xstat *xstats;
     struct rte_eth_xstat_name *xstats_names;
     int len, ret, i;
-    uint16_t port_id;
+    //uint16_t port_id;
     static const char *stats_border = "_______";
 
     len = rte_eth_xstats_get(port_id, NULL, 0);
@@ -236,7 +239,8 @@ static int main_thread()
         double dte = (now.tv_sec - lasttime.tv_sec);
         dte += (now.tv_nsec - lasttime.tv_nsec) / 1000000000.0;
 
-        disp_xstats();
+        disp_xstats(0);
+        disp_xstats(1);
 
         uint64_t pkts = 0;
         uint64_t bytes = 0;
@@ -312,7 +316,8 @@ int main(int argc, char **argv)
     rte_eal_mp_wait_lcore();
 
     disp_eth_stats();
-    disp_xstats();
+    disp_xstats(0);
+    disp_xstats(1);
 
     printf("Stopping port 0...\n");
     rte_eth_dev_stop(0);
