@@ -11,7 +11,7 @@
 #include <rte_timer.h>
 #include <rte_lcore.h>
 
-#define CAPACITY 262143
+#define CAPACITY 65535
 #define CACHE_SIZE 512
 #define NB_RX_DESC 4096
 
@@ -111,13 +111,11 @@ static void recv_thread()
     uint16_t i, q, nb_rx;
     int lcore_id = rte_lcore_id();
     
-    q = (lcore_id - 1) % 2;
-    printf("Starting RX from core %u (queue %u)...\n", lcore_id, q);
-    
-    
     int nb_workers = rte_lcore_count() - 1;
     int nb_workers_per_port = nb_workers / 2;
     uint16_t port_id = (lcore_id - 1) / nb_workers_per_port;
+    q = (lcore_id - 1) % nb_workers_per_port;
+    printf("Starting RX from core %u (port %u, queue %u)...\n", lcore_id, port_id, q);
     
     uint64_t total = 0;
 
